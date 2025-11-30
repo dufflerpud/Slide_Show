@@ -15,11 +15,11 @@ test:		$(RESDIR)/.must_exist
 		$(BINDIR)/* < tests/1 > $(RESDIR)/1
 
 install:
-		install -d $(WWWDIR)/slide
-		install -d $(WWWDIR)/video
-		install -d $(WWWDIR)/avideo
-		install -d $(WWWDIR)/audio
-		install -d $(WWWDIR)/text
+		install -d -m 0755 -o $(IUSER) -g $(IGROUP) $(WWWDIR)/slide
+		install -d -m 0755 -o $(IUSER) -g $(IGROUP) $(WWWDIR)/video
+		install -d -m 0755 -o $(IUSER) -g $(IGROUP) $(WWWDIR)/avideo
+		install -d -m 0755 -o $(IUSER) -g $(IGROUP) $(WWWDIR)/audio
+		install -d -m 0755 -o $(IUSER) -g $(IGROUP) $(WWWDIR)/text
 		@$(MAKE) std_$@ ORIGINAL_TARGET=$@
 		@echo Install complete.
 
