@@ -1,0 +1,65 @@
+<script>
+function footerfunc( fnc, but )
+    {
+    if( fnc == "redraw" )
+        {
+	p.mark_id.selectedIndex = 0;
+	}
+    else if( fnc == "previous" || fnc == "nextb" )
+        {
+	var op = MEDIA[ current_media ];
+	but.style.backgroundColor = "cyan";
+	op.showing =
+	    (op.files.length+op.showing+(fnc=="nextb"?1:-1)) % op.files.length;
+	op.displayer( op );
+	p.mark_id.options[0].text = op.files[op.showing];
+	op.obj.style.display = "";
+	}
+    else
+	{
+	with( window.document.footerform )
+	    {
+	    func.value = fnc;
+	    submit();
+	    }
+	}
+    event.preventDefault();
+    }
+</script>
+
+<form name=footerform method=post>
+<center>
+<input type=hidden name=func>
+<input type=hidden name=SID value="%%SID%%">
+<input type=hidden name=USER value="%%USER%%">
+<table %%TABLE_TAGS%% border=0
+    %%SPLIT%%style='position:absolute;top:0;left:0;width:100%;height:100%;background-color:transparent' >
+<tr><th style='display:%%SPLIT%%' width=50% height=100% %%CLICKEVENT%%='footerfunc("previous",p.previous_id);'></th>
+    <th style='display:%%SPLIT%%' width=50% %%CLICKEVENT%%='footerfunc("nextb",p.nextb_id);'></th></tr>
+<tr><th colspan=2>
+<select help='select_media' onChange='media_change(this.value);' id=media_id style='display:%%SMODE%%'>
+    <option value="slide">XL(Slide)
+    %%OPTIONS%%
+</select>
+<input help='button_previous' type=button value="XL(Previous)" id=previous_id style='display:none'
+    %%CLICKEVENT%%='footerfunc("previous",this);'>
+<input help='button_next' type=button value="XL(Next)" id=nextb_id style='display:none'
+    %%CLICKEVENT%%='footerfunc("nextb",this);'>
+<input type=button value="XL(View)" id=view_id %%CLICKEVENT%%='footerfunc("view");'
+    style='display:%%VMODE%%'>
+<input help='check_continuous' type=checkbox name=auto_next style='display:none' id=auto_next_id>
+<select help='select_disposition' onChange='mark_func(this);' id=mark_id style='display:none'>
+    <option value="">(XL(None))
+    <option value="Hot">XL(Hot)
+    <option value="Cold">XL(Cold)
+    <option value="Duplicate">XL(Duplicate)
+    <option value="Trim">XL(Trim)
+    <option value="Remove">XL(Remove)
+    <option value="Connect">XL(Connect)
+</select><span id=audio_id style='display:none'></span>
+<input help='button_admin' type=button %%CLICKEVENT%%='footerfunc("admin");'
+    value="XL(Account)">
+%%LOGOUTSELECT%%
+	</th></tr>
+	</table></center></form>
+	<script>start_show();</script>

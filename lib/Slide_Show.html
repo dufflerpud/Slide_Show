@@ -1,0 +1,12 @@
+<title>%%PROG%%</title>
+</head><body %%BODY_TAGS%% onResize='browser_resized();' onLoad='media_change("slide");'>
+<center
+><img id=slide_id onLoad='clear_but("slide");'
+style='display:none;border-style:solid;border-color:white'
+><img id=hidden_id onLoad='fix_image_size();'
+style='display:none;border-style:solid;border-color:white'
+><iframe id=text_id style='display:none' onLoad='clear_but("text");'></iframe
+><span id=video_id style='display:none'
+></span><span id=avideo_id style='display:none'></span></center>
+<span id=debug></span>
+<iframe name=query_id id=query_id style=display:none></iframe>
