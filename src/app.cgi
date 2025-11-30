@@ -1,0 +1,221 @@
+#!/usr/bin/perl -w
+#@HDR@	$Id$
+#@HDR@		Copyright 2024 by
+#@HDR@		Christopher Caldwell/Brightsands
+#@HDR@		P.O. Box 401, Bailey Island, ME 04003
+#@HDR@		All Rights Reserved
+#@HDR@
+#@HDR@	This software comprises unpublished confidential information
+#@HDR@	of Brightsands and may not be used, copied or made available
+#@HDR@	to anyone, except in accordance with the license under which
+#@HDR@	it is furnished.
+########################################################################
+#	app.cgi
+#
+#	Web app to allow users to flip through slides and movies easily.
+#
+#	2024-04-19 - c.m.caldwell@alumni.unh.edu - Created
+########################################################################
+
+use strict;
+use lib "/usr/local/lib/perl";
+use cpi_setup qw(setup);
+use cpi_translate qw(xlate xprint);
+use cpi_template qw(template);
+use cpi_cgi qw(show_vars);
+use cpi_user qw(admin_page logout_select);
+use cpi_reorder qw(reorder);
+use cpi_file qw(autopsy cleanup fatal files_in);
+use cpi_vars;
+
+my $FORMNAME = "form";
+
+&setup(
+	stderr=>"Slide_Show",
+	Qrequire_captcha=>1,
+	preset_language=>"en"
+	);
+
+print STDERR __LINE__, " HELPDIR=$cpi_vars::HELPDIR.\n";
+
+our $form_top;
+our $css = "";
+
+my %exclusions =
+    (
+    "audio"	=> '"avideo"',
+    "video"	=> '"avideo","slide","text"',
+    "avideo"	=> '"audio","slide","text","video"',
+    "slide"	=> '"video","avideo","text"',
+    "text"	=> '"video","avideo","slide"'
+    );
+
+my %media;
+my $WWWDIR = $ENV{SCRIPT_FILENAME};
+$WWWDIR =~ s/index.cgi$//;
+my $PUBLIC_URL = $cpi_vars::URL;
+$PUBLIC_URL =~ s+/index\.cgi++;
+$PUBLIC_URL =~ s+/app\.cgi++;
+$PUBLIC_URL =~ s+\.cgi$++;
+my %TEMPLATE =
+    (
+    "JS"		=> "$cpi_vars::BASEDIR/lib/$cpi_vars::PROG.js",
+    "BODY"		=> "$cpi_vars::BASEDIR/lib/$cpi_vars::PROG.html",
+    "FOOTER"		=> "$cpi_vars::BASEDIR/lib/footer.html"
+    );
+
+#########################################################################
+#	Variable declarations.						#
+#########################################################################
+
+our $AGENT = $ENV{HTTP_USER_AGENT} || "unknown";
+my $is_IOS = ($AGENT =~ /iPad/i || $AGENT =~ /iTouch/i || $AGENT =~ /iPhone/i);
+my $CLICKEVENT = ( $is_IOS ? "onTouchStart" : "onClick" );
+
+#########################################################################
+#	Return true if the first item appears in the remaining list.	#
+#########################################################################
+sub inlist
+    {
+    my( $item, @list ) = @_;
+    return grep( $_ eq $item, @list );
+    }
+
+#########################################################################
+#	Print the slide show.						#
+#########################################################################
+sub show_player
+    {
+    my $LOGGER = "formcollector";
+    my @pieces = ();
+    foreach my $mtype ( keys %media )
+        {
+	push( @pieces,
+	    "\"${mtype}\":\t{ prefix:\"$PUBLIC_URL/$mtype\","
+	    . " \"displayer\":put_up_$mtype,\n"
+	    . "\t\"exclude\": ["
+	    . ($exclusions{$mtype} || "")
+	    . "],\n"
+	    . "\t\"files\":[\"" . join('","',@{$media{$mtype}}) . "\"]}" );
+	}
+    &xprint(
+        $form_top,
+	&template( $TEMPLATE{JS},
+	    "%%CLICKEVENT%%", $CLICKEVENT,
+	    "%%LOGGER%%", $LOGGER,
+	    "%%MEDIA%%", join(",\n",@pieces) ),
+	&template( $TEMPLATE{BODY} ),
+	$cpi_vars::HELP_IFRAME );
+    }
+
+#########################################################################
+#	Handle iframe requests.						#
+#########################################################################
+sub app_intro
+    {
+    if( $cpi_vars::FORM{query} )
+        {
+	my $FILE_LOG = "$cpi_vars::BASEDIR/$cpi_vars::PROG.log";
+	my( $fnc, $media, $fname ) = split(/:/,$cpi_vars::FORM{query});
+	open( OUT, ">> $FILE_LOG" ) ||
+	    &autopsy("Cannot append to ${FILE_LOG}:  $!");
+	print OUT "$media/$fname $fnc\n";
+	close( OUT );
+	print "<script>alert('$fnc $media/$fname acknowledged');</script>";
+	exit(0);
+	}
+    }
+
+#########################################################################
+#	Used by the common administrative functions.			#
+#########################################################################
+sub footer
+    {
+    my( $mode ) = @_;
+    my $vmode = "none";
+    my $smode = "";
+
+    $mode = "admin" if( !defined($mode) );
+
+    my $fnc = $cpi_vars::FORM{func};
+    if( $mode eq "admin" && $fnc ne "view" )
+        {
+	$vmode = "";
+	$smode = "none";
+	}
+
+    my $options =
+	join("",
+	    map { "<option value=$_>XL($_)\n" }
+		grep( $_ ne "slide", keys %media ) );
+
+    &xprint(
+        &template( $TEMPLATE{FOOTER},
+	    "%%SPLIT%%", ( $mode eq "admin" ? "none" : "" ),
+	    "%%CLICKEVENT%%", $CLICKEVENT,
+	    "%%OPTIONS%%", $options,
+	    "%%LOGOUTSELECT%%", &logout_select("footerform"),
+	    "%%SMODE%%", $smode,
+	    "%%VMODE%%", $vmode
+	    ) );
+    }
+
+#########################################################################
+#	Handle regular user commands					#
+#########################################################################
+sub user_logic
+    {
+    my $fnc = ( $cpi_vars::FORM{func} || "" );
+    if( $fnc eq "admin"		) { &admin_page();		}
+    elsif( $fnc ne "" && $fnc ne "dirmode" && $fnc ne "dologin" && $fnc ne "view" )
+        { &fatal("Unrecognized function \"$fnc\"."); }
+    &show_player();
+    &footer("user");
+    }
+
+#########################################################################
+#	Main								#
+#########################################################################
+
+if( $ENV{SCRIPT_NAME} eq "" )
+    {
+    &fatal( &xlate( "XL(Usage):  $cpi_vars::PROG.cgi (dump|dumpaccounts|dumptranslations|undump|undumpaccounts|undumptranslations) [ dumpname ]") );
+    }
+
+while( defined($_=shift(@cpi_vars::CSS_PER_DEVICE_TYPE)) )
+    {
+    $css = shift(@cpi_vars::CSS_PER_DEVICE_TYPE);
+    last if( $AGENT =~ /$_/ );
+    }
+
+srand( time() );
+
+foreach my $mtype ( "slide", "text", "video", "avideo", "audio" )
+    {
+    next if( $mtype =~ /\./ || ! -d "$WWWDIR/$mtype" );
+    @{$media{$mtype}} = &reorder( &files_in( "$WWWDIR/$mtype" ) );
+    }
+
+#&show_vars()
+#    if( ! &inlist(($cpi_vars::FORM{func}||""),"download","view") );
+
+&check_filespec( $cpi_vars::FORM{arg} )
+    if( defined($cpi_vars::FORM{arg}) );
+grep( &check_filespec($_), split(/,/,$cpi_vars::FORM{expanded}) )
+    if( defined($cpi_vars::FORM{expanded}) );
+grep( &check_filespec($_), split(/,/,$cpi_vars::FORM{selected}) )
+    if( defined($cpi_vars::FORM{selected}) );
+
+$form_top = <<EOF;
+<style>
+<!--
+$css
+-->
+</style>
+<link href="$cpi_vars::PROG.css" rel="stylesheet" type="text/css" />
+<SCRIPT SRC='sprintf.js' TYPE='text/javascript'></SCRIPT>
+EOF
+
+&user_logic();
+
+&cleanup(0);
