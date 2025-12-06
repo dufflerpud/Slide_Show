@@ -23,7 +23,7 @@ use cpi_setup qw(setup);
 use cpi_translate qw(xlate xprint);
 use cpi_template qw(template);
 use cpi_cgi qw(show_vars);
-use cpi_user qw(admin_page logout_select);
+use cpi_user qw(logout_select);
 use cpi_reorder qw(reorder);
 use cpi_file qw(autopsy cleanup fatal files_in);
 use cpi_vars;
@@ -33,7 +33,7 @@ my $FORMNAME = "form";
 &setup(
 	stderr=>"Slide_Show",
 	Qrequire_captcha=>1,
-	preset_language=>"en"
+	Qpreset_language=>"en"
 	);
 
 print STDERR __LINE__, " HELPDIR=$cpi_vars::HELPDIR.\n";
@@ -166,8 +166,7 @@ sub footer
 sub user_logic
     {
     my $fnc = ( $cpi_vars::FORM{func} || "" );
-    if( $fnc eq "admin"		) { &admin_page();		}
-    elsif( $fnc ne "" && $fnc ne "dirmode" && $fnc ne "dologin" && $fnc ne "view" )
+    if( $fnc ne "" && $fnc ne "dirmode" && $fnc ne "dologin" && $fnc ne "view" )
         { &fatal("Unrecognized function \"$fnc\"."); }
     &show_player();
     &footer("user");
