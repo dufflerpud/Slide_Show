@@ -34,8 +34,8 @@ function footerfunc( fnc, but )
 <input type=hidden name=USER value="%%USER%%">
 <table %%TABLE_TAGS%% border=0
     %%SPLIT%%style='position:absolute;top:0;left:0;width:100%;height:100%;background-color:transparent' >
-<tr><th style='display:%%SPLIT%%' width=50% height=100% %%CLICKEVENT%%='footerfunc("previous",p.previous_id);'></th>
-    <th style='display:%%SPLIT%%' width=50% %%CLICKEVENT%%='footerfunc("nextb",p.nextb_id);'></th></tr>
+<tr><th style='display:%%SPLIT%%' width=50% height=100% %%CLICKEVENT%%='if(current_media=="text"||current_media=="slide"){footerfunc("previous",p.previous_id);}'></th>
+    <th style='display:%%SPLIT%%' width=50% %%CLICKEVENT%%='if(current_media=="text"||current_media=="slide"){footerfunc("nextb",p.nextb_id);}'></th></tr>
 <tr><th colspan=2>
 <select help='select_media' onChange='media_change(this.value);' id=media_id style='display:%%SMODE%%'>
     <option value="slide">XL(Slide)
