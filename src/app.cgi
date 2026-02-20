@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-#indx#	app.cgi - Web app for viewing categorizing and viewing slides
+#indx#	app.cgi - Web app for viewing slides, videos, audios and text files
 #@HDR@	$Id$
 #@HDR@
 #@HDR@	Copyright (c) 2024-2026 Christopher Caldwell (Christopher.M.Caldwell0@gmail.com)
@@ -29,7 +29,7 @@
 #hist#	2024-04-19 - c.m.caldwell@alumni.unh.edu - Created
 #hist#	2026-02-20 - Christopher.M.Caldwell0@gmail.com - Standard header
 ########################################################################
-#doc#	app.cgi - Web app for viewing categorizing and viewing slides
+#doc#	app.cgi - Web app for viewing slides, videos, audios and text files
 ########################################################################
 
 use strict;
